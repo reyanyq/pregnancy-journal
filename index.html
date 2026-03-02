@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>孕期周记 · 拼图工具</title>
+  <meta name="description" content="为孕期时光制作精美拼图纪念卡。上传照片、选择布局和色调，导出高清 PNG，记录每一周的珍贵瞬间。完全免费，无需注册。">
+  <meta property="og:title" content="孕期周记 · 拼图工具">
+  <meta property="og:description" content="为孕期时光制作精美拼图纪念卡，记录每一周的珍贵瞬间。完全免费，无需注册。">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#c0796a">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+      background: #f5f0eb;
+      min-height: 100vh;
+    }
+
+    header {
+      background: white;
+      padding: 18px 40px;
+      border-bottom: 1px solid #e8e0d8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header h1 { font-size: 16px; font-weight: 500; color: #444; }
+    header .sub { font-size: 13px; color: #aaa; }
+
+    .layout-wrap {
+      display: flex;
+      gap: 28px;
+      padding: 28px 36px;
+      align-items: flex-start;
+    }
+
+    /* ===== 左侧控制栏 ===== */
+    .controls {
+      width: 260px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .panel {
+      background: white;
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .panel-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #aaa;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .week-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      color: #444;
+    }
+    .week-row input[type="number"] {
+      width: 58px;
+      border: 1.5px solid #e0d5cc;
+      border-radius: 8px;
+      padding: 7px 8px;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      color: #c0796a;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .week-row input::-webkit-inner-spin-button { display: none; }
+    .week-row input:focus { border-color: #c0796a; }
+
+    .date-row { margin-top: 12px; }
+    .date-label { font-size: 11px; color: #bbb; margin-bottom: 6px; }
+    .date-row input[type="date"] {
+      width: 100%;
+      border: 1.5px solid #e0d5cc;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: #555;
+      outline: none;
+      font-family: inherit;
+    }
+    .date-row input:focus { border-color: #c0796a; }
+
+    .photo-slots { display: flex; flex-direction: column; gap: 8px; }
+    .slot {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1.5px dashed #ddd;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .slot:hover { border-color: #c0796a; background: #fffaf9; }
+    .slot.has-photo { border-style: solid; border-color: #e8c4bc; }
+    .slot-preview {
+      width: 42px; height: 42px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .slot-icon {
+      width: 42px; height: 42px;
+      border-radius: 6px;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #ccc;
+      flex-shrink: 0;
+    }
+    .slot-text { flex: 1; }
+    .slot-name { font-size: 13px; font-weight: 500; color: #444; }
+    .slot-hint { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .slot-del { font-size: 18px; color: #ddd; padding: 2px 4px; }
+    .slot-del:hover { color: #c0796a; }
+    input[type="file"] { display: none; }
+
+    .layout-btns { display: flex; gap: 8px; }
+    .layout-btn {
+      flex: 1;
+      border: 1.5px solid #e0d5cc;
+      background: white;
+      border-radius: 10px;
+      padding: 10px 6px 8px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 11px;
+      color: #888;
+      transition: all 0.2s;
+      line-height: 1.4;
+    }
+    .layout-btn .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .layout-btn:hover { border-color: #c0796a; }
+    .layout-btn.active {
+      border-color: #c0796a;
+      background: #fff5f3;
+      color: #c0796a;
+      font-weight: 500;
+    }
+
+    .bg-swatches {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px 8px;
+      padding: 4px 0 14px;
+    }
+    .bg-swatch-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    .bg-swatch {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2.5px solid transparent;
+      transition: all 0.2s;
+    }
+    .bg-swatch-wrap:hover .bg-swatch { transform: scale(1.1); }
+    .bg-swatch-wrap.active .bg-swatch { border-color: #c0796a; }
+    .bg-swatch-label { font-size: 11px; color: #aaa; letter-spacing: 0.3px; }
+
+    .export-btn {
+      width: 100%;
+      padding: 14px;
+      background: #c0796a;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s;
+    }
+    .export-btn:hover { background: #a86055; }
+    .export-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    .how-to {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .how-to li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+    }
+    .how-to li .step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #f2ece6;
+      color: #c0796a;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .tip {
+      text-align: center;
+      font-size: 11px;
+      color: #bbb;
+      line-height: 1.8;
+    }
+
+    /* ===== 右侧预览 ===== */
+    .preview-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .preview-label {
+      font-size: 11px;
+      color: #bbb;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    /* 画布 - 固定尺寸 */
+    #artwork {
+      width: 500px;
+      height: 720px;
+      padding: 44px 40px 32px;
+      box-shadow: 0 12px 50px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .art-header {
+      text-align: center;
+      margin-bottom: 22px;
+      flex-shrink: 0;
+    }
+    .art-week {
+      font-size: 44px;
+      font-weight: 200;
+      letter-spacing: 6px;
+      line-height: 1;
+    }
+    .art-week .zh { font-size: 17px; font-weight: 400; letter-spacing: 2px; }
+    .art-line { width: 36px; height: 1px; margin: 12px auto; }
+    .art-sub { font-size: 10px; letter-spacing: 3px; }
+    #dispDate { font-size: 12px; margin-top: 7px; letter-spacing: 1px; min-height: 16px; }
+
+    #photoGrid { flex: 1; min-height: 0; }
+
+    .grid-a, .grid-b, .grid-c {
+      height: 100%;
+      display: grid;
+      gap: 8px;
+    }
+    .grid-a { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+    .grid-a .p0 { grid-row: 1 / 3; }
+    .grid-b { grid-template-columns: 1fr 1fr; grid-template-rows: 2fr 1fr; }
+    .grid-b .p0 { grid-column: 1 / 3; }
+    .grid-c { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+
+    /* 照片格子 */
+    .photo-cell {
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    .photo-cell.has-img { cursor: grab; }
+    .photo-cell.has-img:active { cursor: grabbing; }
+    .photo-cell.empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    /* 照片 canvas - 填满格子 */
+    .photo-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* 编辑操作层（悬停显示）*/
+    .edit-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      background: linear-gradient(transparent, rgba(0,0,0,0.25));
+    }
+    .photo-cell.has-img:hover .edit-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .edit-btn {
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 4px 9px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      backdrop-filter: blur(4px);
+      transition: background 0.15s;
+    }
+    .edit-btn:hover { background: rgba(0,0,0,0.75); }
+
+    .drag-hint {
+      position: absolute;
+      top: 6px; right: 6px;
+      background: rgba(0,0,0,0.4);
+      color: white;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .photo-cell.has-img:hover .drag-hint { opacity: 1; }
+
+    .art-footer {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>🤱</span>
+  <h1>孕期周记</h1>
+  <span class="sub">· 拼图工具</span>
+</header>
+
+<div class="layout-wrap">
+
+  <div class="controls">
+
+    <div class="panel">
+      <div class="panel-title">第几周</div>
+      <div class="week-row">
+        <span>第</span>
+        <input type="number" id="weekInput" value="12" min="1" max="42" oninput="updateArtwork()">
+        <span>周</span>
+      </div>
+      <div class="date-row">
+        <div class="date-label">日期</div>
+        <input type="date" id="dateInput" oninput="updateArtwork()">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">上传照片（3-4 张）</div>
+      <div class="photo-slots" id="slotContainer"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">排列方式</div>
+      <div class="layout-btns">
+        <button class="layout-btn active" id="lbtn-a" onclick="setLayout('a')">
+          <span class="icon">▉▌</span>左大右小
+        </button>
+        <button class="layout-btn" id="lbtn-b" onclick="setLayout('b')">
+          <span class="icon">▀▄</span>上一下二
+        </button>
+        <button class="layout-btn" id="lbtn-c" onclick="setLayout('c')">
+          <span class="icon">⊞</span>四宫格
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">背景色调</div>
+      <div class="bg-swatches">
+        <div class="bg-swatch-wrap active" id="bgw-morning" onclick="setBg('morning')">
+          <div class="bg-swatch" style="background:#F7F2EC;box-shadow:inset 0 0 0 1px #ddd;"></div>
+          <span class="bg-swatch-label">晨光</span>
+        </div>
+        <div class="bg-swatch-wrap" id="bgw-linen" onclick="setBg('linen')">
+          <div class="bg-swatch" style="background:#E5D5BE;"></div>
+          <span class="bg-swatch-label">亚麻</span>
+        </div>
+        <div class="bg-swatch-wrap" id="bgw-snow" onclick="setBg('snow')">
+          <div class="bg-swatch" style="background:#EDF0F5;box-shadow:inset 0 0 0 1px #ddd;"></div>
+          <span class="bg-swatch-label">初雪</span>
+        </div>
+        <div class="bg-swatch-wrap" id="bgw-pine" onclick="setBg('pine')">
+          <div class="bg-swatch" style="background:#1B2822;"></div>
+          <span class="bg-swatch-label">松墨</span>
+        </div>
+        <div class="bg-swatch-wrap" id="bgw-night" onclick="setBg('night')">
+          <div class="bg-swatch" style="background:#191C25;"></div>
+          <span class="bg-swatch-label">深夜</span>
+        </div>
+        <div class="bg-swatch-wrap" id="bgw-terra" onclick="setBg('terra')">
+          <div class="bg-swatch" style="background:#2A1E16;"></div>
+          <span class="bg-swatch-label">褐土</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">使用步骤</div>
+      <ol class="how-to">
+        <li><span class="step-num">1</span>填写当前孕周和日期</li>
+        <li><span class="step-num">2</span>点击上传 3～4 张照片</li>
+        <li><span class="step-num">3</span>选择排列方式和背景色调</li>
+        <li><span class="step-num">4</span>在预览区拖动平移、滚轮缩放，调整构图；悬停后可旋转照片</li>
+        <li><span class="step-num">5</span>点击下方按钮，导出高清纪念图</li>
+      </ol>
+    </div>
+
+    <button class="export-btn" id="exportBtn" onclick="exportImg()">
+      ↓ 导出图片
+    </button>
+
+  </div>
+
+  <div class="preview-wrap">
+    <div class="preview-label">预 览</div>
+    <div id="artwork">
+      <div class="art-header">
+        <div class="art-week">
+          <span class="zh" id="artPre">第 </span><span id="dispWeek">12</span><span class="zh" id="artSuf"> 周</span>
+        </div>
+        <div class="art-line" id="artLine"></div>
+        <div class="art-sub" id="artSub">PREGNANCY JOURNAL</div>
+        <div id="dispDate"></div>
+      </div>
+      <div id="photoGrid" class="grid-a"></div>
+      <div class="art-footer" id="artFooter">
+        ♡ &nbsp; <span id="dispYear"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ===== 状态 =====
+  let photos         = [null, null, null, null];
+  let photoImages    = [null, null, null, null]; // 已加载的 Image 对象
+  let photoTransforms = [
+    { panX: 0, panY: 0, scale: 1, rotation: 0 },
+    { panX: 0, panY: 0, scale: 1, rotation: 0 },
+    { panX: 0, panY: 0, scale: 1, rotation: 0 },
+    { panX: 0, panY: 0, scale: 1, rotation: 0 },
+  ];
+  let layout    = 'a';
+  let currentBg = 'morning';
+
+  const THEMES = {
+    // ── 浅色系 ──
+    morning: { // 晨光：奶油白，温柔清晨
+      bg:'#F7F2EC', week:'#3D2B1F', weekZh:'#9A7B6A',
+      lineBg:'linear-gradient(to right,transparent,#C4A882,transparent)',
+      sub:'#BFA88A', date:'#B09070', footer:'#C8B090',
+      emptyBg:'#EDE5D8', emptyText:'#C4A882',
+    },
+    linen: { // 亚麻：温暖沙色，像手工相册
+      bg:'#E5D5BE', week:'#3D2B1F', weekZh:'#8A6A52',
+      lineBg:'linear-gradient(to right,transparent,#B8956A,transparent)',
+      sub:'#B0886A', date:'#A07858', footer:'#B8956A',
+      emptyBg:'#D8C5AB', emptyText:'#B8956A',
+    },
+    snow: { // 初雪：冷白，宁静期待
+      bg:'#EDF0F5', week:'#2A3545', weekZh:'#7A8EA8',
+      lineBg:'linear-gradient(to right,transparent,#A8BDD4,transparent)',
+      sub:'#A0B0C8', date:'#8A9EB8', footer:'#A8BDD4',
+      emptyBg:'#E0E6EF', emptyText:'#A8BDD4',
+    },
+    // ── 深色系 ──
+    pine: { // 松墨：深绿，自然沉静
+      bg:'#1B2822', week:'#D8EFE4', weekZh:'#7AAA88',
+      lineBg:'linear-gradient(to right,transparent,#3A5A48,transparent)',
+      sub:'#4A7060', date:'#5A8A6A', footer:'#3A5A48',
+      emptyBg:'#243530', emptyText:'#3A5A48',
+    },
+    night: { // 深夜：近黑带蓝，像把照片放进夜空
+      bg:'#191C25', week:'#E0E4F0', weekZh:'#7880A8',
+      lineBg:'linear-gradient(to right,transparent,#353B5A,transparent)',
+      sub:'#404870', date:'#505878', footer:'#353B5A',
+      emptyBg:'#22263A', emptyText:'#353B5A',
+    },
+    terra: { // 褐土：温暖深棕，像旧皮革相册
+      bg:'#2A1E16', week:'#F0E8DC', weekZh:'#A08068',
+      lineBg:'linear-gradient(to right,transparent,#5A3820,transparent)',
+      sub:'#6A4830', date:'#7A5840', footer:'#5A3820',
+      emptyBg:'#352418', emptyText:'#5A3820',
+    },
+  };
+
+  // ===== 拖拽状态 =====
+  let isDragging = false, dragIndex = -1, dragCell = null;
+  let dragStartX, dragStartY, dragStartPanX, dragStartPanY;
+
+  document.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    photoTransforms[dragIndex].panX = dragStartPanX + dx;
+    photoTransforms[dragIndex].panY = dragStartPanY + dy;
+    redrawCell(dragCell, dragIndex);
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false; dragIndex = -1; dragCell = null;
+  });
+
+  // ===== 上传槽 =====
+  const slotLabels = ['照片 1（主图）', '照片 2', '照片 3', '照片 4（可选）'];
+
+  // ===== 初始化 =====
+  document.getElementById('dispYear').textContent = new Date().getFullYear();
+  buildSlots();
+  rebuildGrid();
+  updateArtwork();
+
+  function buildSlots() {
+    const c = document.getElementById('slotContainer');
+    c.innerHTML = '';
+    photos.forEach((src, i) => {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.style.display = 'none';
+      fileInput.addEventListener('click', e => e.stopPropagation());
+      fileInput.addEventListener('change', e => onFile(e, i));
+
+      const slot = document.createElement('div');
+      slot.className = `slot${src ? ' has-photo' : ''}`;
+      slot.appendChild(fileInput);
+      slot.addEventListener('click', () => fileInput.click());
+
+      if (src) {
+        const img = document.createElement('img');
+        img.src = src; img.className = 'slot-preview';
+        slot.appendChild(img);
+      } else {
+        const icon = document.createElement('div');
+        icon.className = 'slot-icon'; icon.textContent = '+';
+        slot.appendChild(icon);
+      }
+
+      const text = document.createElement('div');
+      text.className = 'slot-text';
+      text.innerHTML = `<div class="slot-name">${slotLabels[i]}</div><div class="slot-hint">${src ? '点击更换' : '点击上传'}</div>`;
+      slot.appendChild(text);
+
+      if (src) {
+        const del = document.createElement('span');
+        del.className = 'slot-del'; del.textContent = '×';
+        del.addEventListener('click', e => { e.stopPropagation(); delPhoto(i); });
+        slot.appendChild(del);
+      }
+      c.appendChild(slot);
+    });
+  }
+
+  function onFile(e, i) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      photos[i] = ev.target.result;
+      photoTransforms[i] = { panX: 0, panY: 0, scale: 1, rotation: 0 };
+      // 加载 Image 对象以备 canvas 绘制
+      const img = new Image();
+      img.onload = () => {
+        photoImages[i] = img;
+        buildSlots();
+        rebuildGrid();
+      };
+      img.src = photos[i];
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function delPhoto(i) {
+    photos[i] = null;
+    photoImages[i] = null;
+    photoTransforms[i] = { panX: 0, panY: 0, scale: 1, rotation: 0 };
+    buildSlots();
+    rebuildGrid();
+  }
+
+  // ===== 布局 =====
+  function setLayout(l) {
+    layout = l;
+    ['a','b','c'].forEach(x => {
+      document.getElementById(`lbtn-${x}`).className = 'layout-btn' + (x === l ? ' active' : '');
+    });
+    rebuildGrid();
+  }
+
+  // ===== 照片网格 =====
+  function rebuildGrid() {
+    const grid = document.getElementById('photoGrid');
+    const theme = THEMES[currentBg];
+    const max = layout === 'c' ? 4 : 3;
+
+    grid.className = `grid-${layout}`;
+    grid.innerHTML = '';
+
+    photos.slice(0, max).forEach((src, i) => {
+      const cell = document.createElement('div');
+      cell.className = `photo-cell p${i} ${src ? 'has-img' : 'empty'}`;
+      cell.dataset.idx = i;
+
+      if (src) {
+        // Canvas 用于渲染（解决 html2canvas 不支持 object-fit 的问题）
+        const canvas = document.createElement('canvas');
+        canvas.className = 'photo-canvas';
+        cell.appendChild(canvas);
+
+        // 编辑操作层
+        const overlay = document.createElement('div');
+        overlay.className = 'edit-overlay';
+
+        // 旋转按钮
+        [['↺', -90], ['↻', 90]].forEach(([icon, deg]) => {
+          const btn = document.createElement('button');
+          btn.className = 'edit-btn';
+          btn.textContent = icon + ' ' + Math.abs(deg) + '°';
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+            photoTransforms[i].rotation = (photoTransforms[i].rotation + deg + 360) % 360;
+            redrawCell(cell, i);
+          });
+          overlay.appendChild(btn);
+        });
+
+        // 重置按钮
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'edit-btn';
+        resetBtn.textContent = '↩ 重置';
+        resetBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          photoTransforms[i] = { panX: 0, panY: 0, scale: 1, rotation: 0 };
+          redrawCell(cell, i);
+        });
+        overlay.appendChild(resetBtn);
+        cell.appendChild(overlay);
+
+        // 拖拽提示
+        const hint = document.createElement('div');
+        hint.className = 'drag-hint';
+        hint.textContent = '拖动平移';
+        cell.appendChild(hint);
+
+        // 拖拽（平移）
+        cell.addEventListener('mousedown', e => {
+          if (e.target.classList.contains('edit-btn')) return;
+          isDragging = true; dragIndex = i; dragCell = cell;
+          dragStartX = e.clientX; dragStartY = e.clientY;
+          dragStartPanX = photoTransforms[i].panX;
+          dragStartPanY = photoTransforms[i].panY;
+          e.preventDefault();
+        });
+
+        // 滚轮缩放
+        cell.addEventListener('wheel', e => {
+          e.preventDefault();
+          const factor = e.deltaY < 0 ? 1.06 : 0.94;
+          photoTransforms[i].scale = Math.max(0.2, Math.min(6, photoTransforms[i].scale * factor));
+          redrawCell(cell, i);
+        }, { passive: false });
+
+      } else {
+        cell.textContent = '＋';
+        cell.style.background = theme.emptyBg;
+        cell.style.color = theme.emptyText;
+      }
+
+      grid.appendChild(cell);
+    });
+
+    // 等布局计算完成后再绘制（offsetWidth/Height 需要 layout 完成）
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.photo-cell.has-img').forEach(cell => {
+        redrawCell(cell, parseInt(cell.dataset.idx));
+      });
+    });
+  }
+
+  // ===== 核心：在 canvas 上绘制照片（带裁剪、缩放、旋转、平移）=====
+  // 以 3 倍分辨率绘制，与 html2canvas scale:3 对齐，导出不模糊
+  const CANVAS_SCALE = 3;
+
+  function redrawCell(cell, i) {
+    const canvas = cell.querySelector('canvas');
+    if (!canvas || !photoImages[i]) return;
+
+    const w = cell.offsetWidth;
+    const h = cell.offsetHeight;
+    if (!w || !h) return;
+
+    // canvas 实际像素 = CSS 尺寸 × 3，保持高分辨率
+    canvas.width  = w * CANVAS_SCALE;
+    canvas.height = h * CANVAS_SCALE;
+    // CSS 显示尺寸不变，视觉上仍填满格子
+    canvas.style.width  = w + 'px';
+    canvas.style.height = h + 'px';
+
+    const ctx = canvas.getContext('2d');
+    const img = photoImages[i];
+    const t   = photoTransforms[i];
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    // 缩放坐标系到 3x，之后所有坐标都按 CSS 像素写，自动放大
+    ctx.scale(CANVAS_SCALE, CANVAS_SCALE);
+
+    // cover 基础缩放：确保图片覆盖整个格子
+    const coverScale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+    const totalScale = coverScale * t.scale;
+    const rW = img.naturalWidth  * totalScale;
+    const rH = img.naturalHeight * totalScale;
+
+    ctx.translate(w / 2 + t.panX, h / 2 + t.panY);
+    ctx.rotate(t.rotation * Math.PI / 180);
+    ctx.drawImage(img, -rW / 2, -rH / 2, rW, rH);
+    ctx.restore();
+  }
+
+  // ===== 文字/日期/主题更新 =====
+  function updateArtwork() {
+    document.getElementById('dispWeek').textContent = document.getElementById('weekInput').value || '?';
+    const dateVal = document.getElementById('dateInput').value;
+    const dispDate = document.getElementById('dispDate');
+    if (dateVal) {
+      const [y, m, d] = dateVal.split('-');
+      dispDate.textContent = `${y} · ${m} · ${d}`;
+    } else {
+      dispDate.textContent = '';
+    }
+    applyTheme();
+  }
+
+  // ===== 背景色 =====
+  function setBg(style) {
+    currentBg = style;
+    ['morning','linen','snow','pine','night','terra'].forEach(s => {
+      document.getElementById(`bgw-${s}`).className = 'bg-swatch-wrap' + (s === style ? ' active' : '');
+    });
+    applyTheme();
+    rebuildGrid();
+  }
+
+  function applyTheme() {
+    const t = THEMES[currentBg];
+    document.getElementById('artwork').style.background = t.bg;
+    document.getElementById('dispWeek').parentElement.style.color = t.week;
+    document.getElementById('artPre').style.color  = t.weekZh;
+    document.getElementById('artSuf').style.color  = t.weekZh;
+    document.getElementById('artLine').style.background = t.lineBg;
+    document.getElementById('artSub').style.color  = t.sub;
+    document.getElementById('dispDate').style.color = t.date;
+    document.getElementById('artFooter').style.color = t.footer;
+  }
+
+  // ===== 导出（html2canvas 可正确捕获 canvas 元素）=====
+  function exportImg() {
+    const btn  = document.getElementById('exportBtn');
+    const week = document.getElementById('weekInput').value || '?';
+    btn.disabled = true; btn.textContent = '生成中…';
+
+    html2canvas(document.getElementById('artwork'), {
+      scale:           3,
+      useCORS:         true,
+      backgroundColor: THEMES[currentBg].bg,
+      logging:         false,
+    }).then(canvas => {
+      const a    = document.createElement('a');
+      a.download = `孕期周记_第${week}周.png`;
+      a.href     = canvas.toDataURL('image/png');
+      a.click();
+      btn.disabled = false; btn.textContent = '↓ 导出图片';
+    });
+  }
+</script>
+
+</body>
+</html>
