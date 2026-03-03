@@ -908,21 +908,40 @@
 
   // ===== 导出（html2canvas 可正确捕获 canvas 元素）=====
   function exportImg() {
-    const btn  = document.getElementById('exportBtn');
-    const week = document.getElementById('weekInput').value || '?';
+    const btn    = document.getElementById('exportBtn');
+    const scaler = document.getElementById('artworkScaler');
+    const week   = document.getElementById('weekInput').value || '?';
     btn.disabled = true; btn.textContent = '生成中…';
 
-    html2canvas(document.getElementById('artwork'), {
-      scale:           3,
-      useCORS:         true,
-      backgroundColor: THEMES[currentBg].bg,
-      logging:         false,
-    }).then(canvas => {
-      const a    = document.createElement('a');
-      a.download = `孕期周记_第${week}周.png`;
-      a.href     = canvas.toDataURL('image/png');
-      a.click();
-      btn.disabled = false; btn.textContent = '↓ 导出图片';
+    // 临时移除父容器缩放变换，让 artwork 恢复原始 500×720px 尺寸
+    // 否则 html2canvas 会通过 getBoundingClientRect 获得缩小后的错误尺寸
+    const savedTransform = scaler.style.transform;
+    const savedHeight    = scaler.style.height;
+    scaler.style.transform = 'none';
+    scaler.style.height    = '';
+
+    // 等浏览器完成重排后再截图
+    requestAnimationFrame(() => {
+      html2canvas(document.getElementById('artwork'), {
+        scale:           3,
+        useCORS:         true,
+        backgroundColor: THEMES[currentBg].bg,
+        logging:         false,
+      }).then(canvas => {
+        // 恢复缩放
+        scaler.style.transform = savedTransform;
+        scaler.style.height    = savedHeight;
+
+        const a    = document.createElement('a');
+        a.download = `孕期周记_第${week}周.png`;
+        a.href     = canvas.toDataURL('image/png');
+        a.click();
+        btn.disabled = false; btn.textContent = '↓ 保存高清图片';
+      }).catch(() => {
+        scaler.style.transform = savedTransform;
+        scaler.style.height    = savedHeight;
+        btn.disabled = false; btn.textContent = '↓ 保存高清图片';
+      });
     });
   }
 </script>
