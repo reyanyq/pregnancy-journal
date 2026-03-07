@@ -230,6 +230,61 @@
       line-height: 1.8;
     }
 
+    /* 头部 slogan */
+    .header-slogan {
+      margin-left: auto;
+      font-size: 11px;
+      color: #ccc;
+      letter-spacing: 0.5px;
+    }
+
+    /* 色调分组标签 */
+    .swatch-group-label {
+      font-size: 10px;
+      color: #ccc;
+      letter-spacing: 0.5px;
+      margin: 4px 0 2px;
+      grid-column: 1 / -1;
+    }
+
+    /* 步骤折叠面板 */
+    .how-to-summary {
+      font-size: 11px;
+      font-weight: 600;
+      color: #aaa;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0;
+    }
+    .how-to-summary::-webkit-details-marker { display: none; }
+    details[open] .how-to-summary { margin-bottom: 12px; }
+    .how-to-summary::after { content: '▸'; font-size: 10px; }
+    details[open] .how-to-summary::after { content: '▾'; }
+
+    /* 预览区导出按钮 */
+    .preview-export-btn {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 16px;
+      padding: 14px;
+      background: #c0796a;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s;
+    }
+    .preview-export-btn:hover { background: #a86055; }
+    .preview-export-btn:disabled { background: #ccc; cursor: not-allowed; }
+
     /* ===== 右侧预览 ===== */
     .preview-wrap {
       flex: 1;
@@ -396,7 +451,7 @@
       .slot { padding: 12px 14px; }
       .week-row input[type="number"] { padding: 10px 8px; }
       .date-row input[type="date"] { padding: 10px; }
-      .export-btn { padding: 16px; font-size: 16px; }
+      .preview-export-btn { padding: 16px; font-size: 16px; max-width: 100%; }
       .layout-btn { padding: 12px 6px 10px; }
       .edit-btn { padding: 6px 12px; font-size: 12px; }
 
@@ -415,6 +470,7 @@
   <span>🤱</span>
   <h1>孕期周记</h1>
   <span class="sub">· 拼图工具</span>
+  <span class="header-slogan">记录每一周，都值得珍藏</span>
 </header>
 
 <div class="layout-wrap">
@@ -435,7 +491,7 @@
     </div>
 
     <div class="panel">
-      <div class="panel-title">上传照片（3-4 张）</div>
+      <div class="panel-title" id="photoSlotTitle">上传照片（0 / 3 张）</div>
       <div class="photo-slots" id="slotContainer"></div>
     </div>
 
@@ -457,6 +513,7 @@
     <div class="panel">
       <div class="panel-title">背景色调</div>
       <div class="bg-swatches">
+        <div class="swatch-group-label">浅色系</div>
         <div class="bg-swatch-wrap active" id="bgw-morning" onclick="setBg('morning')">
           <div class="bg-swatch" style="background:#F7F2EC;box-shadow:inset 0 0 0 1px #ddd;"></div>
           <span class="bg-swatch-label">晨光</span>
@@ -469,6 +526,7 @@
           <div class="bg-swatch" style="background:#EDF0F5;box-shadow:inset 0 0 0 1px #ddd;"></div>
           <span class="bg-swatch-label">初雪</span>
         </div>
+        <div class="swatch-group-label">深色系</div>
         <div class="bg-swatch-wrap" id="bgw-pine" onclick="setBg('pine')">
           <div class="bg-swatch" style="background:#1B2822;"></div>
           <span class="bg-swatch-label">松墨</span>
@@ -485,19 +543,17 @@
     </div>
 
     <div class="panel">
-      <div class="panel-title">使用步骤</div>
-      <ol class="how-to">
-        <li><span class="step-num">1</span>填写当前孕周和日期</li>
-        <li><span class="step-num">2</span>点击上传 3～4 张照片</li>
-        <li><span class="step-num">3</span>选择排列方式和背景色调</li>
-        <li><span class="step-num">4</span><span id="howToStep4">在预览区拖动平移、滚轮缩放，调整构图；悬停后可旋转照片</span></li>
-        <li><span class="step-num">5</span>点击下方按钮，导出高清纪念图</li>
-      </ol>
+      <details>
+        <summary class="how-to-summary">使用步骤</summary>
+        <ol class="how-to">
+          <li><span class="step-num">1</span>填写当前孕周和日期</li>
+          <li><span class="step-num">2</span>点击上传 3～4 张照片</li>
+          <li><span class="step-num">3</span>选择排列方式和背景色调</li>
+          <li><span class="step-num">4</span><span id="howToStep4">在预览区拖动平移、滚轮缩放，调整构图；悬停后可旋转照片</span></li>
+          <li><span class="step-num">5</span>点击预览区下方按钮，导出高清纪念图</li>
+        </ol>
+      </details>
     </div>
-
-    <button class="export-btn" id="exportBtn" onclick="exportImg()">
-      ↓ 保存高清图片
-    </button>
 
   </div>
 
@@ -519,6 +575,9 @@
       </div>
     </div>
     </div><!-- /.artwork-scaler -->
+    <button class="preview-export-btn" id="exportBtn" onclick="exportImg()">
+      ↓ 保存高清图片
+    </button>
   </div>
 
 </div>
@@ -608,6 +667,10 @@
   function buildSlots() {
     const c = document.getElementById('slotContainer');
     c.innerHTML = '';
+    // 更新上传计数
+    const uploadedCount = photos.filter(Boolean).length;
+    const titleEl = document.getElementById('photoSlotTitle');
+    if (titleEl) titleEl.textContent = `上传照片（${uploadedCount} / 3 张）`;
     photos.forEach((src, i) => {
       const fileInput = document.createElement('input');
       fileInput.type = 'file';
@@ -796,9 +859,10 @@
         }, { passive: false });
 
       } else {
-        cell.textContent = '＋';
+        cell.innerHTML = `<div style="text-align:center;line-height:1.6"><div style="font-size:22px;margin-bottom:4px">📷</div><div style="font-size:11px">点击上传</div></div>`;
         cell.style.background = theme.emptyBg;
         cell.style.color = theme.emptyText;
+        cell.style.cursor = 'pointer';
       }
 
       grid.appendChild(cell);
