@@ -51,12 +51,14 @@
       padding: 16px 18px;
     }
     .panel-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: #aaa;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+      font-size: 13px;
+      font-weight: 500;
+      color: #888;
+      letter-spacing: 0;
       margin-bottom: 12px;
+      padding-left: 9px;
+      border-left: 3px solid #c0796a;
+      line-height: 1.2;
     }
 
     .week-row {
@@ -146,7 +148,9 @@
       transition: all 0.2s;
       line-height: 1.4;
     }
-    .layout-btn .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .layout-btn .icon { display: flex; justify-content: center; margin-bottom: 5px; color: #bbb; }
+    .layout-btn.active .icon { color: #c0796a; }
+    .layout-btn:hover .icon { color: #c0796a; }
     .layout-btn:hover { border-color: #c0796a; }
     .layout-btn.active {
       border-color: #c0796a;
@@ -240,9 +244,9 @@
 
     /* 色调分组标签 */
     .swatch-group-label {
-      font-size: 10px;
-      color: #ccc;
-      letter-spacing: 0.5px;
+      font-size: 11px;
+      color: #bbb;
+      letter-spacing: 0.3px;
       margin: 4px 0 2px;
       grid-column: 1 / -1;
     }
@@ -299,10 +303,37 @@
       letter-spacing: 1px;
     }
 
-    /* 画布 - 固定尺寸 */
+    /* 尺寸选择按钮 */
+    .size-btns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .size-btn {
+      border: 1.5px solid #e0d5cc;
+      background: white;
+      border-radius: 10px;
+      padding: 8px 4px 7px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+      line-height: 1.4;
+      transition: all 0.2s;
+    }
+    .size-btn .size-desc { font-size: 10px; color: #bbb; font-weight: 400; display: block; margin-top: 2px; }
+    .size-btn:hover { border-color: #c0796a; }
+    .size-btn.active {
+      border-color: #c0796a;
+      background: #fff5f3;
+      color: #c0796a;
+    }
+    .size-btn.active .size-desc { color: #d9998a; }
+
+    /* 画布 - 宽度固定，高度由 JS 控制 */
     #artwork {
       width: 500px;
-      height: 720px;
       padding: 44px 40px 32px;
       box-shadow: 0 12px 50px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
       border-radius: 3px;
@@ -499,13 +530,32 @@
       <div class="panel-title">排列方式</div>
       <div class="layout-btns">
         <button class="layout-btn active" id="lbtn-a" onclick="setLayout('a')">
-          <span class="icon">▉▌</span>左大右小
+          <span class="icon">
+            <svg width="24" height="20" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="13" height="18" rx="2" fill="currentColor" opacity="0.85"/>
+              <rect x="16" y="1" width="7" height="8" rx="2" fill="currentColor" opacity="0.45"/>
+              <rect x="16" y="11" width="7" height="8" rx="2" fill="currentColor" opacity="0.45"/>
+            </svg>
+          </span>左大右小
         </button>
         <button class="layout-btn" id="lbtn-b" onclick="setLayout('b')">
-          <span class="icon">▀▄</span>上一下二
+          <span class="icon">
+            <svg width="24" height="20" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="22" height="11" rx="2" fill="currentColor" opacity="0.85"/>
+              <rect x="1" y="14" width="10" height="5" rx="2" fill="currentColor" opacity="0.45"/>
+              <rect x="13" y="14" width="10" height="5" rx="2" fill="currentColor" opacity="0.45"/>
+            </svg>
+          </span>上一下二
         </button>
         <button class="layout-btn" id="lbtn-c" onclick="setLayout('c')">
-          <span class="icon">⊞</span>四宫格
+          <span class="icon">
+            <svg width="24" height="20" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="10" height="8" rx="2" fill="currentColor" opacity="0.65"/>
+              <rect x="13" y="1" width="10" height="8" rx="2" fill="currentColor" opacity="0.65"/>
+              <rect x="1" y="11" width="10" height="8" rx="2" fill="currentColor" opacity="0.65"/>
+              <rect x="13" y="11" width="10" height="8" rx="2" fill="currentColor" opacity="0.65"/>
+            </svg>
+          </span>四宫格
         </button>
       </div>
     </div>
@@ -543,7 +593,18 @@
     </div>
 
     <div class="panel">
-      <details>
+      <div class="panel-title">打印尺寸</div>
+      <div class="size-btns">
+        <button class="size-btn" id="sbtn-5inch" onclick="setSizePrint('5inch')">5寸<span class="size-desc">3.5×5英寸</span></button>
+        <button class="size-btn active" id="sbtn-6inch" onclick="setSizePrint('6inch')">6寸<span class="size-desc">4×6英寸</span></button>
+        <button class="size-btn" id="sbtn-7inch" onclick="setSizePrint('7inch')">7寸<span class="size-desc">5×7英寸</span></button>
+        <button class="size-btn" id="sbtn-8inch" onclick="setSizePrint('8inch')">8寸<span class="size-desc">6×8英寸</span></button>
+        <button class="size-btn" id="sbtn-a4" onclick="setSizePrint('a4')">A4<span class="size-desc">210×297mm</span></button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <details open>
         <summary class="how-to-summary">使用步骤</summary>
         <ol class="how-to">
           <li><span class="step-num">1</span>填写当前孕周和日期</li>
@@ -554,6 +615,8 @@
         </ol>
       </details>
     </div>
+
+    <button class="export-btn" onclick="exportImg()">↓ 保存高清图片</button>
 
   </div>
 
@@ -583,6 +646,17 @@
 </div>
 
 <script>
+  // ===== 打印尺寸 =====
+  // dispH: 画布在页面上的显示高度(px)；exportW/H: 300dpi 导出像素尺寸
+  const PRINT_SIZES = {
+    '5inch': { label: '5寸',  dispH: 714,  exportW: 1050, exportH: 1500 },
+    '6inch': { label: '6寸',  dispH: 750,  exportW: 1200, exportH: 1800 },
+    '7inch': { label: '7寸',  dispH: 700,  exportW: 1500, exportH: 2100 },
+    '8inch': { label: '8寸',  dispH: 667,  exportW: 1800, exportH: 2400 },
+    'a4':    { label: 'A4',   dispH: 707,  exportW: 2480, exportH: 3508 },
+  };
+  let printSize = '6inch';
+
   // ===== 状态 =====
   let photos         = [null, null, null, null];
   let photoImages    = [null, null, null, null]; // 已加载的 Image 对象
@@ -661,6 +735,7 @@
   buildSlots();
   rebuildGrid();
   updateArtwork();
+  applySizePrint('6inch'); // 设置初始画布高度
   scaleArtwork();
   window.addEventListener('resize', scaleArtwork);
 
@@ -734,6 +809,27 @@
     photoTransforms[i] = { panX: 0, panY: 0, scale: 1, rotation: 0 };
     buildSlots();
     rebuildGrid();
+  }
+
+  // ===== 打印尺寸切换 =====
+  function setSizePrint(s) {
+    printSize = s;
+    Object.keys(PRINT_SIZES).forEach(k => {
+      const btn = document.getElementById(`sbtn-${k}`);
+      if (btn) btn.className = 'size-btn' + (k === s ? ' active' : '');
+    });
+    applySizePrint(s);
+  }
+
+  function applySizePrint(s) {
+    const size = PRINT_SIZES[s];
+    document.getElementById('artwork').style.height = size.dispH + 'px';
+    scaleArtwork();
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.photo-cell.has-img').forEach(cell => {
+        redrawCell(cell, parseInt(cell.dataset.idx));
+      });
+    });
   }
 
   // ===== 布局 =====
@@ -965,7 +1061,7 @@
     }
     const scale = Math.min(1, (window.innerWidth - 32) / 500);
     scaler.style.transform = `scale(${scale})`;
-    scaler.style.height    = (720 * scale) + 'px';
+    scaler.style.height    = (PRINT_SIZES[printSize].dispH * scale) + 'px';
     scaler.dataset.scale   = String(scale);
     if (step4) step4.textContent = '单指拖动平移、双指捏合缩放，调整构图；点击按钮旋转照片';
   }
@@ -986,8 +1082,9 @@
 
     // 等浏览器完成重排后再截图
     requestAnimationFrame(() => {
+      const exportScale = PRINT_SIZES[printSize].exportW / 500;
       html2canvas(document.getElementById('artwork'), {
-        scale:           3,
+        scale:           exportScale,
         useCORS:         true,
         backgroundColor: THEMES[currentBg].bg,
         logging:         false,
@@ -997,7 +1094,7 @@
         scaler.style.height    = savedHeight;
 
         const a    = document.createElement('a');
-        a.download = `孕期周记_第${week}周.png`;
+        a.download = `孕期周记_第${week}周_${PRINT_SIZES[printSize].label}.png`;
         a.href     = canvas.toDataURL('image/png');
         a.click();
         btn.disabled = false; btn.textContent = '↓ 保存高清图片';
