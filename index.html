@@ -351,6 +351,7 @@
       transition: all 0.2s;
     }
     .deco-btn .deco-icon { font-size: 16px; display: block; margin-bottom: 3px; }
+    .deco-btn.deco-none { grid-column: 1 / -1; padding: 6px 4px; }
     .deco-btn:hover { border-color: #c0796a; }
     .deco-btn.active {
       border-color: #c0796a;
@@ -590,12 +591,13 @@
     <div class="panel">
       <div class="panel-title">季节装饰</div>
       <div class="deco-btns">
-        <button class="deco-btn active" id="dbtn-none"   onclick="setDeco('none')">  <span class="deco-icon">○</span>无</button>
-        <button class="deco-btn"        id="dbtn-spring" onclick="setDeco('spring')"><span class="deco-icon">✿</span>春·樱</button>
-        <button class="deco-btn"        id="dbtn-autumn" onclick="setDeco('autumn')"><span class="deco-icon">❧</span>秋·叶</button>
-        <button class="deco-btn"        id="dbtn-winter" onclick="setDeco('winter')"><span class="deco-icon">❄</span>冬·雪</button>
-        <button class="deco-btn"        id="dbtn-night"  onclick="setDeco('night')"> <span class="deco-icon">✦</span>夜·星</button>
-        <button class="deco-btn"        id="dbtn-rain"   onclick="setDeco('rain')">  <span class="deco-icon">〰</span>雨·滴</button>
+        <button class="deco-btn deco-none active" id="dbtn-none"   onclick="setDeco('none')">  <span class="deco-icon">○</span>无</button>
+        <button class="deco-btn"                  id="dbtn-spring" onclick="setDeco('spring')"><span class="deco-icon">✿</span>春·桃</button>
+        <button class="deco-btn"                  id="dbtn-summer" onclick="setDeco('summer')"><span class="deco-icon">☀</span>夏·阳</button>
+        <button class="deco-btn"                  id="dbtn-autumn" onclick="setDeco('autumn')"><span class="deco-icon">❧</span>秋·叶</button>
+        <button class="deco-btn"                  id="dbtn-winter" onclick="setDeco('winter')"><span class="deco-icon">❄</span>冬·雪</button>
+        <button class="deco-btn"                  id="dbtn-night"  onclick="setDeco('night')"> <span class="deco-icon">✦</span>夜·星</button>
+        <button class="deco-btn"                  id="dbtn-rain"   onclick="setDeco('rain')">  <span class="deco-icon">〰</span>雨·滴</button>
       </div>
     </div>
 
@@ -1069,13 +1071,17 @@
 
   // ===== 季节装饰 =====
   let currentDeco = 'none';
-  const DECO_IDS = ['none','spring','autumn','winter','night','rain'];
+  const DECO_IDS = ['none','spring','summer','autumn','winter','night','rain'];
 
   function setDeco(d) {
     currentDeco = d;
     DECO_IDS.forEach(id => {
       const btn = document.getElementById(`dbtn-${id}`);
-      if (btn) btn.className = 'deco-btn' + (id === d ? ' active' : '');
+      if (btn) {
+        let cls = 'deco-btn' + (id === d ? ' active' : '');
+        if (id === 'none') cls += ' deco-none';
+        btn.className = cls;
+      }
     });
     buildDecoLayer();
   }
@@ -1089,7 +1095,8 @@
     const W = 500, H = PRINT_SIZES[printSize].dispH;
 
     const COLORS = {
-      spring: light ? '#C87090' : '#F0B0C8',
+      spring: light ? '#C86080' : '#F0A8C0',
+      summer: light ? '#C88020' : '#F0C040',
       autumn: light ? '#B05820' : '#E88040',
       winter: light ? '#4878A8' : '#A8CCF0',
       night:  light ? '#6050A0' : '#EED050',
@@ -1097,14 +1104,28 @@
     };
     const c = COLORS[currentDeco];
 
-    // 基础图元函数
-    const flower = (x, y, sz, r) => {
+    // 照片区域边界——装饰只落在安全区内
+    const TOP    = 145;       // 顶部安全区上限（px）
+    const BOTTOM = H - 62;    // 底部安全区下限（px）
+    // 左右边距（x < 38 或 x > 462）在中间高度也可放极小元素
+
+    // 桃花：5瓣圆形花瓣 + 黄色花心（比樱花更饱满温暖）
+    const peach = (x, y, sz, r) => {
       const p = [0,72,144,216,288].map(a => {
         const rad = (a+r)*Math.PI/180;
-        const pr = sz * 0.44;
-        return `<circle cx="${(x+Math.cos(rad)*sz).toFixed(1)}" cy="${(y+Math.sin(rad)*sz).toFixed(1)}" r="${pr.toFixed(1)}" fill="${c}"/>`;
+        return `<circle cx="${(x+Math.cos(rad)*sz).toFixed(1)}" cy="${(y+Math.sin(rad)*sz).toFixed(1)}" r="${(sz*0.50).toFixed(1)}" fill="${c}"/>`;
       }).join('');
-      return `<g opacity="0.65">${p}<circle cx="${x}" cy="${y}" r="${(sz*0.22).toFixed(1)}" fill="${c}" opacity="0.9"/></g>`;
+      return `<g opacity="0.68">${p}<circle cx="${x}" cy="${y}" r="${(sz*0.26).toFixed(1)}" fill="#F0C060" opacity="0.85"/></g>`;
+    };
+
+    // 太阳光芒
+    const sunray = (x, y, sz, r) => {
+      let rays = '';
+      for (let i = 0; i < 8; i++) {
+        const a = (i*45+r)*Math.PI/180;
+        rays += `<line x1="${(x+Math.cos(a)*sz*0.46).toFixed(1)}" y1="${(y+Math.sin(a)*sz*0.46).toFixed(1)}" x2="${(x+Math.cos(a)*sz).toFixed(1)}" y2="${(y+Math.sin(a)*sz).toFixed(1)}" stroke="${c}" stroke-width="1.3"/>`;
+      }
+      return `<g opacity="0.65"><circle cx="${x}" cy="${y}" r="${(sz*0.40).toFixed(1)}" fill="${c}"/>${rays}</g>`;
     };
 
     const snowflake = (x, y, sz, r) => {
@@ -1153,59 +1174,99 @@
     let els = '';
 
     if (currentDeco === 'spring') {
-      [ [28,28,9,20],[46,18,7,-15],[18,52,6,40],
-        [472,26,9,-25],[454,17,7,15],[482,52,7,-30],
-        [28,H-38,9,30],[50,H-20,7,-20],
-        [472,H-36,9,-15],[452,H-18,7,25],
-        [250,18,7,50],[250,H-18,8,-40],
-        [12,H*0.44,6,15],[488,H*0.52,6,-20],
-      ].forEach(([x,y,sz,r]) => els += flower(x,y,sz,r));
+      // 上方（y < TOP）：左角 + 右角 + 中央
+      [ [25,25,9,20],[44,14,7,-15],[14,50,6,40],[60,36,7,30],
+        [476,23,9,-25],[456,14,7,15],[486,50,7,-30],[436,38,7,-10],
+        [250,16,7,55],
+      ].forEach(([x,y,sz,r]) => els += peach(x,y,sz,r));
+      // 下方（y > BOTTOM）：左角 + 右角 + 中央
+      [ [25,H-36,9,30],[48,H-18,7,-20],[60,H-50,6,15],
+        [476,H-34,9,-15],[454,H-16,7,25],[436,H-48,6,-30],
+        [250,H-16,8,-40],
+      ].forEach(([x,y,sz,r]) => els += peach(x,y,sz,r));
+      // 左右边距中间（极小，x < 38 或 x > 462）
+      [ [11,TOP+20,4,15],[11,TOP+60,3,40],[489,TOP+30,4,-20],[489,TOP+70,3,-35],
+      ].forEach(([x,y,sz,r]) => els += peach(x,y,sz,r));
+    }
+
+    else if (currentDeco === 'summer') {
+      // 上方
+      [ [32,32,14,10],[470,28,14,-5],
+        [130,20,10,20],[370,18,10,0],[250,13,8,15],
+      ].forEach(([x,y,sz,r]) => els += sunray(x,y,sz,r));
+      // 下方
+      [ [35,H-38,12,5],[466,H-36,12,-10],
+        [140,H-26,9,15],[360,H-23,9,0],[250,H-18,8,10],
+      ].forEach(([x,y,sz,r]) => els += sunray(x,y,sz,r));
+      // 左右边距中间（小）
+      [ [12,TOP+30,6,0],[12,TOP+80,5,10],[488,TOP+40,6,5],[488,TOP+90,5,-5],
+      ].forEach(([x,y,sz,r]) => els += sunray(x,y,sz,r));
     }
 
     else if (currentDeco === 'autumn') {
-      [ [462,22,12,30],[440,14,9,-20],[478,48,8,55],
-        [32,28,11,-30],[56,14,8,20],
-        [30,H-28,10,-15],[462,H-24,11,40],
-        [240,20,8,60],[280,H-18,9,-50],
-        [110,H*0.14,7,25],[398,H*0.18,8,-35],
-        [78,H*0.84,7,40],[422,H*0.8,8,-25],
-        [160,H*0.5,6,15],[340,H*0.48,7,-20],
+      // 上方：右角为主，左角少量
+      [ [464,20,12,30],[442,12,9,-20],[480,46,8,55],[420,36,7,40],
+        [30,26,11,-30],[54,12,8,20],[16,50,7,-10],
+        [240,18,8,60],[260,14,6,-45],
+      ].forEach(([x,y,sz,r]) => els += leaf(x,y,sz,r));
+      // 下方
+      [ [28,H-26,10,-15],[50,H-12,7,25],
+        [464,H-22,11,40],[444,H-12,8,-20],
+        [280,H-16,8,-50],
+      ].forEach(([x,y,sz,r]) => els += leaf(x,y,sz,r));
+      // 左右边距中间（小叶）
+      [ [14,TOP+25,5,20],[14,TOP+70,4,35],[486,TOP+35,5,-25],[486,TOP+80,4,-40],
       ].forEach(([x,y,sz,r]) => els += leaf(x,y,sz,r));
     }
 
     else if (currentDeco === 'winter') {
-      [ [30,32,11,0],[470,28,11,15],
-        [55,H-38,10,30],[445,H-33,10,0],
-        [250,20,9,15],[250,H-20,9,45],
-        [118,H*0.18,8,0],[382,H*0.16,8,30],
-        [20,H*0.5,7,15],[480,H*0.48,7,0],
-        [148,H*0.82,7,20],[352,H*0.84,7,45],
+      // 上方
+      [ [28,30,11,0],[472,26,11,15],[130,26,8,30],[370,23,8,0],[250,18,9,15],
+      ].forEach(([x,y,sz,r]) => els += snowflake(x,y,sz,r));
+      // 下方
+      [ [53,H-36,10,30],[447,H-31,10,0],[148,H-26,8,20],[352,H-23,8,45],[250,H-18,9,45],
+      ].forEach(([x,y,sz,r]) => els += snowflake(x,y,sz,r));
+      // 左右边距中间（小）
+      [ [13,TOP+20,6,15],[13,TOP+65,5,0],[487,TOP+30,6,0],[487,TOP+75,5,30],
       ].forEach(([x,y,sz,r]) => els += snowflake(x,y,sz,r));
     }
 
     else if (currentDeco === 'night') {
-      els += moon(455, 42, 18);
-      [ [28,38,8,15],[52,18,6,0],[16,68,5,20],
-        [242,18,6,0],[260,H-20,5,15],
-        [480,H-38,7,0],[462,H-18,5,25],
-        [128,H*0.14,5,10],[372,H*0.11,7,0],
-        [18,H*0.34,5,0],[482,H*0.42,5,20],
-        [98,H*0.74,6,15],[402,H*0.78,5,0],
-        [198,H*0.09,4,0],[318,H*0.07,4,20],
-        [78,H*0.9,5,10],[422,H*0.88,5,0],
+      els += moon(456, 40, 18);
+      // 上方星星
+      [ [25,36,8,15],[50,16,6,0],[14,66,5,20],[76,26,5,30],
+        [240,16,6,0],[320,23,5,20],[160,20,4,15],
       ].forEach(([x,y,sz,r]) => els += star4(x,y,sz,r));
-      [[148,H*0.05],[352,H*0.07],[58,H*0.24],[442,H*0.3],[178,H*0.88],[332,H*0.92]]
-        .forEach(([x,y]) => els += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.8" fill="${c}" opacity="0.6"/>`);
+      // 下方星星
+      [ [482,H-36,7,0],[464,H-16,5,25],[442,H-53,5,10],
+        [26,H-38,6,15],[48,H-18,4,0],
+        [250,H-23,5,0],[200,H-16,4,20],[300,H-18,4,15],
+        [118,H-33,5,10],[382,H-30,5,0],
+      ].forEach(([x,y,sz,r]) => els += star4(x,y,sz,r));
+      // 顶部点状小星
+      [[148,55],[352,62],[80,44],[420,50]].forEach(([x,y]) =>
+        els += `<circle cx="${x}" cy="${y}" r="1.8" fill="${c}" opacity="0.6"/>`);
+      // 底部点状小星
+      [[180,H-10],[320,H-8],[98,H-15],[402,H-12]].forEach(([x,y]) =>
+        els += `<circle cx="${x}" cy="${y}" r="1.8" fill="${c}" opacity="0.6"/>`);
+      // 边距中间极小点（在安全区内）
+      [[11,TOP+20],[11,TOP+55],[11,TOP+90],[489,TOP+30],[489,TOP+65],[489,TOP+100]]
+        .forEach(([x,y]) => els += `<circle cx="${x}" cy="${y}" r="1.4" fill="${c}" opacity="0.5"/>`);
     }
 
     else if (currentDeco === 'rain') {
-      [ [28,38,7,25],[52,80,6,25],[18,128,5,25],
-        [480,28,7,25],[456,72,6,25],[488,122,5,25],
-        [242,24,6,25],[260,68,5,25],
-        [118,H-58,6,25],[400,H-52,7,25],
-        [78,H-24,5,25],[432,H-26,6,25],
-        [158,H*0.3,5,25],[342,H*0.28,5,25],
-        [18,H*0.6,5,25],[482,H*0.64,5,25],
+      // 上方（对角线排布，y < TOP）
+      [ [25,36,7,25],[50,78,6,25],[16,120,5,25],
+        [482,26,7,25],[458,70,6,25],[490,112,5,25],
+        [163,28,5,25],[337,26,5,25],[250,22,6,25],
+      ].forEach(([x,y,sz,r]) => els += drop(x,y,sz,r));
+      // 下方
+      [ [25,H-36,7,25],[50,H-73,6,25],
+        [480,H-28,7,25],[460,H-66,6,25],
+        [260,H-28,6,25],[180,H-38,5,25],[320,H-36,5,25],
+      ].forEach(([x,y,sz,r]) => els += drop(x,y,sz,r));
+      // 边距中间
+      [ [11,TOP+20,5,25],[11,TOP+55,4,25],[489,TOP+30,5,25],[489,TOP+65,4,25],
       ].forEach(([x,y,sz,r]) => els += drop(x,y,sz,r));
     }
 
