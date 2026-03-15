@@ -1052,17 +1052,18 @@
     const scaler = document.getElementById('artworkScaler');
     const step4  = document.getElementById('howToStep4');
     if (window.innerWidth > 768) {
-      scaler.style.transform = '';
-      scaler.style.height    = '';
-      scaler.dataset.scale   = '1';
+      scaler.style.transform  = '';
+      scaler.style.height     = '';
+      scaler.style.marginLeft = '';
+      scaler.dataset.scale    = '1';
       if (step4) step4.textContent = '在预览区拖动平移、滚轮缩放，调整构图；悬停后可旋转照片';
       return;
     }
-    const scale = Math.min(1, (window.innerWidth - 32) / 500);
-    const marginLeft = (window.innerWidth - 500 * scale) / 2;
-    scaler.style.transform  = `scale(${scale})`;
+    const scale      = Math.min(1, (window.innerWidth - 32) / 500);
+    const translateX = (window.innerWidth - 500 * scale) / 2;
+    scaler.style.transform  = `translateX(${translateX}px) scale(${scale})`;
+    scaler.style.marginLeft = '0';
     scaler.style.height     = (PRINT_SIZES[printSize].dispH * scale) + 'px';
-    scaler.style.marginLeft = marginLeft + 'px';
     scaler.dataset.scale    = String(scale);
     if (step4) step4.textContent = '单指拖动平移、双指捏合缩放，调整构图；点击按钮旋转照片';
   }
