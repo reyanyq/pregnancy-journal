@@ -462,7 +462,7 @@
         order: 1;
         width: 100%;
         overflow-x: hidden;
-        align-items: flex-start;
+        align-items: center;
       }
       .preview-label { align-self: center; }
 
@@ -471,10 +471,10 @@
         width: 100%;
       }
 
-      /* 画布缩放容器（JS 动态写 scale、height、marginLeft） */
+      /* 画布缩放容器（JS 动态写 scale 和 height） */
       .artwork-scaler {
         width: 500px;
-        transform-origin: top left;
+        transform-origin: top center;
       }
 
       /* 触摸目标加大 */
@@ -1059,9 +1059,8 @@
       if (step4) step4.textContent = '在预览区拖动平移、滚轮缩放，调整构图；悬停后可旋转照片';
       return;
     }
-    const scale      = Math.min(1, (window.innerWidth - 32) / 500);
-    const translateX = (window.innerWidth - 500 * scale) / 2;
-    scaler.style.transform  = `translateX(${translateX}px) scale(${scale})`;
+    const scale = Math.min(1, (window.innerWidth - 32) / 500);
+    scaler.style.transform  = `scale(${scale})`;
     scaler.style.marginLeft = '0';
     scaler.style.height     = (PRINT_SIZES[printSize].dispH * scale) + 'px';
     scaler.dataset.scale    = String(scale);
