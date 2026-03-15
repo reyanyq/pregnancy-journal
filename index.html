@@ -471,11 +471,10 @@
         width: 100%;
       }
 
-      /* 画布缩放容器（JS 动态写 scale 和 height） */
+      /* 画布缩放容器（JS 动态写 scale、height、marginLeft） */
       .artwork-scaler {
         width: 500px;
         transform-origin: top left;
-        margin-left: 16px;
       }
 
       /* 触摸目标加大 */
@@ -1060,9 +1059,11 @@
       return;
     }
     const scale = Math.min(1, (window.innerWidth - 32) / 500);
-    scaler.style.transform = `scale(${scale})`;
-    scaler.style.height    = (PRINT_SIZES[printSize].dispH * scale) + 'px';
-    scaler.dataset.scale   = String(scale);
+    const marginLeft = (window.innerWidth - 500 * scale) / 2;
+    scaler.style.transform  = `scale(${scale})`;
+    scaler.style.height     = (PRINT_SIZES[printSize].dispH * scale) + 'px';
+    scaler.style.marginLeft = marginLeft + 'px';
+    scaler.dataset.scale    = String(scale);
     if (step4) step4.textContent = '单指拖动平移、双指捏合缩放，调整构图；点击按钮旋转照片';
   }
 
