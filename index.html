@@ -1081,6 +1081,10 @@
     scaler.style.transform = 'none';
     scaler.style.height    = '';
 
+    // 导出前隐藏编辑图标和拖拽提示
+    const overlays = document.querySelectorAll('.edit-overlay, .drag-hint');
+    overlays.forEach(el => el.style.opacity = '0');
+
     // 等浏览器完成重排后再截图
     requestAnimationFrame(() => {
       const exportScale = PRINT_SIZES[printSize].exportW / 500;
@@ -1090,9 +1094,10 @@
         backgroundColor: THEMES[currentBg].bg,
         logging:         false,
       }).then(canvas => {
-        // 恢复缩放
+        // 恢复缩放和编辑图标
         scaler.style.transform = savedTransform;
         scaler.style.height    = savedHeight;
+        overlays.forEach(el => el.style.opacity = '');
 
         const a    = document.createElement('a');
         a.download = `孕期周记_第${week}周_${PRINT_SIZES[printSize].label}.png`;
@@ -1102,6 +1107,7 @@
       }).catch(() => {
         scaler.style.transform = savedTransform;
         scaler.style.height    = savedHeight;
+        overlays.forEach(el => el.style.opacity = '');
         btn.disabled = false; btn.textContent = '↓ 保存高清图片';
       });
     });
